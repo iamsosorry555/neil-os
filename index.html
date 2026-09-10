@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Download Neilos OS, a personal web desktop with Google and Wireshark Lab preloaded.">
+    <title>Neilos OS | Personal operating system</title>
+    <style>
+        :root {
+            --ink: #dce9e6;
+            --muted: #8fa9a8;
+            --paper: #081316;
+            --blue: #4de1c1;
+            --blue-dark: #b5fff0;
+            --coral: #ff9c66;
+            --line: rgba(132, 211, 198, .22);
+            --shadow: 0 28px 70px rgba(0, 0, 0, .32);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--ink);
+            background:
+                linear-gradient(rgba(77, 225, 193, .045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(77, 225, 193, .045) 1px, transparent 1px),
+                radial-gradient(circle at 82% 7%, rgba(255, 156, 102, .16), transparent 25%),
+                linear-gradient(135deg, #0b1c20 0%, var(--paper) 58%, #142129 100%);
+            background-size: 32px 32px, 32px 32px, auto, auto;
+            font: 15px/1.5 "Trebuchet MS", "Segoe UI", sans-serif;
+        }
+
+        button, a { font: inherit; }
+        a { color: inherit; }
+
+        .page {
+            width: min(1180px, calc(100% - 40px));
+            margin: auto;
+            padding: 28px 0 54px;
+        }
+
+        header, .hero, .features, footer { animation: appear .7s ease both; }
+        .hero { animation-delay: .08s; }
+        .features { animation-delay: .16s; }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 22px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .wordmark {
+            color: var(--blue);
+            font: 700 14px/1 Consolas, monospace;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+        }
+
+        .header-note {
+            color: var(--blue);
+            font: 12px Consolas, monospace;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(300px, .95fr);
+            gap: clamp(36px, 8vw, 110px);
+            align-items: center;
+            padding: clamp(68px, 11vw, 142px) 0 92px;
+        }
+
+        .eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 22px;
+            color: var(--coral);
+            font: 700 12px "Trebuchet MS", sans-serif;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 34px;
+            height: 1px;
+            background: currentColor;
+        }
+
+        h1 {
+            max-width: 620px;
+            margin: 0;
+            font-size: clamp(3.5rem, 8vw, 7.5rem);
+            color: var(--blue-dark);
+            font-weight: 700;
+            line-height: .88;
+            letter-spacing: -.035em;
+        }
+
+        .lede {
+            max-width: 500px;
+            margin: 30px 0 32px;
+            color: var(--muted);
+            font-size: 20px;
+            line-height: 1.45;
+        }
+
+        .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 48px;
+            padding: 0 20px;
+            border: 1px solid var(--blue);
+            border-radius: 4px;
+            color: white;
+            background: var(--blue);
+            font: 700 14px "Trebuchet MS", sans-serif;
+            text-decoration: none;
+            transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+        }
+
+        .button:hover { background: var(--blue-dark); box-shadow: 0 10px 24px rgba(32, 67, 76, .18); transform: translateY(-2px); }
+        .button.secondary { color: var(--blue-dark); background: transparent; border-color: var(--line); }
+        .button.secondary:hover { background: rgba(255,255,255,.4); }
+
+        .download-caption {
+            margin: 14px 0 0;
+            color: var(--muted);
+            font: 12px "Trebuchet MS", sans-serif;
+        }
+
+        .app-preview {
+            position: relative;
+            min-height: 365px;
+            border: 1px solid rgba(32, 67, 76, .2);
+            border-radius: 6px;
+            padding: 12px;
+            background: rgba(255,255,255,.48);
+            box-shadow: var(--shadow);
+            transform: rotate(2deg);
+        }
+
+        .preview-window {
+            height: 100%;
+            min-height: 340px;
+            overflow: hidden;
+            border: 1px solid rgba(23, 38, 42, .12);
+            background: #edf2ef;
+        }
+
+        .preview-bar { display: flex; gap: 6px; padding: 10px; background: #dce7e6; }
+        .preview-bar i { width: 7px; height: 7px; border-radius: 50%; background: var(--coral); }
+        .preview-bar i:nth-child(2) { background: #c6a35f; }
+        .preview-bar i:nth-child(3) { background: #688d78; }
+        .preview-content { display: grid; grid-template-columns: 86px 1fr; height: 302px; }
+        .preview-nav { padding: 18px 10px; background: #d7e3e2; }
+        .preview-nav span { display: block; height: 7px; margin: 0 0 14px; border-radius: 2px; background: rgba(45, 89, 101, .3); }
+        .preview-main { padding: 24px 20px; background: linear-gradient(135deg, #f5f4ef, #e5edeb); }
+        .preview-kicker { width: 64px; height: 7px; margin-bottom: 13px; background: var(--coral); }
+        .preview-title { width: 74%; height: 22px; margin-bottom: 10px; background: var(--blue); }
+        .preview-copy { width: 48%; height: 7px; margin-bottom: 28px; background: #9baeb0; }
+        .preview-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .preview-card { height: 90px; border: 1px solid rgba(23,38,42,.1); background: rgba(255,255,255,.65); }
+        .preview-card::before { content: ""; display: block; width: 38%; height: 7px; margin: 16px; background: #789298; }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .feature { min-height: 150px; padding: 25px 24px 26px 0; }
+        .feature + .feature { padding-left: 24px; border-left: 1px solid var(--line); }
+        .feature-number { color: var(--coral); font: 700 12px "Trebuchet MS", sans-serif; }
+        .feature h2 { margin: 12px 0 7px; font-size: 22px; font-weight: 400; }
+        .feature p { margin: 0; color: var(--muted); }
+
+        footer { display: flex; justify-content: space-between; gap: 20px; padding-top: 25px; color: var(--muted); font: 12px "Trebuchet MS", sans-serif; }
+        footer p { margin: 0; }
+
+        @keyframes appear { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 760px) {
+            .page { width: min(100% - 28px, 540px); padding-top: 18px; }
+            .header-note { display: none; }
+            .hero { grid-template-columns: 1fr; padding: 74px 0 65px; }
+            .app-preview { min-height: 300px; transform: rotate(1deg); }
+            .preview-window { min-height: 275px; }
+            .preview-content { height: 237px; }
+            .features { grid-template-columns: 1fr; }
+            .feature, .feature + .feature { min-height: auto; padding: 22px 0; border-left: 0; }
+            .feature + .feature { border-top: 1px solid var(--line); }
+            footer { display: block; }
+            footer p + p { margin-top: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header>
+            <div class="wordmark">Neilos</div>
+            <div class="header-note">Your personal web desktop</div>
+        </header>
+
+        <section class="hero">
+            <div>
+                <p class="eyebrow">A small space for big work</p>
+                <h1>A quieter way to open the web.</h1>
+                <p class="lede">Neilos OS brings your tools, notes, browser, and little experiments into one calm desktop you can download and open anywhere.</p>
+                <div class="actions">
+                    <a class="button" href="neilos-os.zip" download="neilos-os.zip">Download Neilos OS <span aria-hidden="true">&nbsp;↓</span></a>
+                    <a class="button secondary" href="neilos.html" target="_blank" rel="noopener">Open in browser <span aria-hidden="true">&nbsp;↗</span></a>
+                </div>
+                <p class="download-caption">ZIP download · Open <strong>neilos.html</strong> inside · No installer</p>
+            </div>
+
+            <div class="app-preview" aria-label="Preview of the Neilos desktop interface">
+                <div class="preview-window">
+                    <div class="preview-bar"><i></i><i></i><i></i></div>
+                    <div class="preview-content">
+                        <div class="preview-nav"><span></span><span></span><span></span><span></span></div>
+                        <div class="preview-main">
+                            <div class="preview-kicker"></div>
+                            <div class="preview-title"></div>
+                            <div class="preview-copy"></div>
+                            <div class="preview-cards"><div class="preview-card"></div><div class="preview-card"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" aria-label="Neilos features">
+            <article class="feature">
+                <div class="feature-number">01 / FOCUS</div>
+                <h2>One clean workspace</h2>
+                <p>Keep the useful parts of a desktop close at hand without filling your screen with noise.</p>
+            </article>
+            <article class="feature">
+                <div class="feature-number">02 / PLAY</div>
+                <h2>Tools to explore</h2>
+                <p>Browse, run small code experiments, inspect your system, and save a little thinking space.</p>
+            </article>
+            <article class="feature">
+                <div class="feature-number">03 / SIMPLE</div>
+                <h2>Just open the file</h2>
+                <p>Download Neilos OS, unzip it, double-click <strong>neilos.html</strong>, and your workspace is ready.</p>
+            </article>
+        </section>
+
+        <footer>
+            <p>Neilos / personal desktop workspace</p>
+            <p>Built to be opened, not installed.</p>
+        </footer>
+    </main>
+</body>
+</html>
