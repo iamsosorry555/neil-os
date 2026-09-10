@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neilos</title>
+    <style>
+        :root {
+            --bg: #f3efe9;
+            --bg-deep: #dfe6e8;
+            --panel: rgba(255, 255, 255, 0.82);
+            --panel-strong: #f8f5f1;
+            --ink: #1e2b30;
+            --muted: #5c6d76;
+            --line: rgba(24, 42, 49, 0.12);
+            --accent: #3a586d;
+            --accent-soft: #e4edf3;
+            --warm: #b7794d;
+            --green: #587c63;
+            --shadow: 0 18px 42px rgba(32, 41, 48, 0.12);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            overflow: hidden;
+            color: var(--ink);
+            font: 14px/1.5 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(180deg, var(--bg) 0%, #eef2f1 100%);
+        }
+
+        button { font: inherit; color: inherit; cursor: pointer; }
+
+        #login-screen {
+            position: fixed;
+            z-index: 100;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(180deg, rgba(216, 223, 219, 0.9), rgba(242, 239, 233, 0.94));
+        }
+        #login-screen.hidden { display: none; }
+        .login-box {
+            width: min(360px, calc(100vw - 40px));
+            padding: 34px 28px 28px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: rgba(255,255,255,0.7);
+            box-shadow: var(--shadow);
+            text-align: center;
+            backdrop-filter: blur(14px);
+        }
+        .login-mark {
+            display: grid;
+            place-items: center;
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 18px;
+            border: 1px solid var(--accent);
+            border-radius: 14px;
+            color: var(--accent);
+            font-size: 28px;
+            font-weight: 600;
+            background: var(--accent-soft);
+        }
+        .login-box h1 { margin: 0; letter-spacing: .12em; font-size: 24px; }
+        .login-box p { color: var(--muted); margin: 10px 0 18px; }
+        .login-box input {
+            width: 100%;
+            margin: 10px 0;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 12px 13px;
+            color: var(--ink);
+            background: rgba(255,255,255,0.75);
+            outline: none;
+        }
+        .login-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(58,88,109,0.08); }
+        .login-box button[type="submit"] {
+            width: 100%;
+            border: 0;
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: white;
+            background: var(--accent);
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        #login-error { min-height: 20px; color: #b24a4a; font-size: 12px; }
+
+        #desktop {
+            position: relative;
+            min-height: 100vh;
+            overflow: hidden;
+            padding: 18px 18px 82px;
+            background:
+                linear-gradient(135deg, rgba(255,255,255,0.16), transparent 40%),
+                radial-gradient(circle at top right, rgba(124, 148, 165, 0.14), transparent 30%),
+                linear-gradient(180deg, #dfe8ea 0%, #e8ece9 100%);
+        }
+
+        #desktop::before, #desktop::after {
+            content: "";
+            position: absolute;
+            width: 45vw;
+            height: 45vw;
+            border: 1px solid rgba(53, 73, 83, 0.08);
+            transform: rotate(18deg);
+            pointer-events: none;
+        }
+
+        #desktop::before { right: -18vw; top: -18vw; border-radius: 30%; }
+        #desktop::after { left: -26vw; bottom: -24vw; border-radius: 40%; }
+
+        .brand {
+            position: absolute;
+            top: 30px;
+            left: 38px;
+            letter-spacing: .18em;
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            z-index: 5;
+        }
+
+        .desktop-shell {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            gap: 18px;
+            height: calc(100vh - 110px);
+            padding-top: 58px;
+        }
+
+        .sidebar {
+            width: 220px;
+            flex-shrink: 0;
+            padding: 18px 14px 14px;
+            border: 1px solid rgba(24, 42, 49, 0.08);
+            border-radius: 22px;
+            background: rgba(255,255,255,0.36);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.42), 0 18px 30px rgba(18, 40, 48, 0.08);
+            backdrop-filter: blur(12px);
+        }
+
+        .profile-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 8px 14px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .profile-avatar {
+            display: grid;
+            place-items: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent) 0%, #6d8ba0 100%);
+            color: white;
+            font-weight: 700;
+        }
+
+        .profile-meta strong { display: block; font-size: 13px; }
+        .profile-meta span { color: var(--muted); font-size: 11px; }
+
+        .sidebar-section {
+            margin-top: 18px;
+        }
+
+        .sidebar-section-label {
+            margin: 0 0 10px;
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+        }
+
+        .sidebar-actions {
+            display: grid;
+            gap: 8px;
+        }
+
+        .sidebar-action {
+            border: 1px solid transparent;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.28);
+            color: var(--ink);
+            text-align: left;
+        }
+
+        .sidebar-action:hover {
+            background: rgba(255,255,255,0.52);
+            border-color: var(--line);
+        }
+
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .workspace-hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 20px;
+            border: 1px solid rgba(24, 42, 49, 0.08);
+            border-radius: 22px;
+            background: rgba(255,255,255,0.42);
+            box-shadow: 0 18px 30px rgba(18, 40, 48, 0.06);
+            backdrop-filter: blur(12px);
+        }
+
+        .workspace-title h1 {
+            margin: 0 0 4px;
+            font-size: clamp(1.7rem, 2vw, 2.2rem);
+        }
+
+        .workspace-title p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .hero-stat {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 150px;
+            padding: 10px 14px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255,255,255,0.56);
+            text-align: right;
+        }
+
+        .hero-stat strong {
+            display: block;
+            font-size: 18px;
+        }
+
+        .desktop-icons {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(78px, 1fr));
+            gap: 12px;
+            width: 100%;
+            padding: 4px 2px 2px;
+        }
+
+        .desktop-icon {
+            display: grid;
+            justify-items: center;
+            gap: 8px;
+            padding: 16px 8px 12px;
+            border: 1px solid rgba(24, 42, 49, 0.08);
+            border-radius: 18px;
+            background: rgba(255,255,255,0.38);
+            box-shadow: 0 12px 18px rgba(18, 40, 48, 0.05);
+            transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+        }
+
+        .desktop-icon:hover {
+            border-color: var(--line);
+            background: rgba(255,255,255,0.54);
+            transform: translateY(-2px);
+        }
+        .icon-mark {
+            display: grid;
+            place-items: center;
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            background: rgba(58,88,109,0.08);
+            color: var(--accent);
+            font-size: 23px;
+            line-height: 1;
+        }
+        .desktop-icon span:last-child { color: var(--ink); font-size: 12px; font-weight: 600; }
+
+        .taskbar {
+            position: absolute;
+            z-index: 50;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 66px;
+            padding: 9px 16px;
+            border-top: 1px solid var(--line);
+            background: rgba(248, 245, 240, 0.8);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 -8px 20px rgba(26, 34, 40, 0.04);
+        }
+
+        #startbutton, .task-button {
+            border: 1px solid rgba(24, 42, 49, 0.08);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.6);
+            padding: 8px 12px;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+
+        #startbutton { color: var(--accent); font-weight: 700; }
+        #startbutton:hover, .task-button:hover { background: rgba(255,255,255,0.8); border-color: rgba(24, 42, 49, 0.18); transform: translateY(-1px); }
+        #task-buttons { display: flex; gap: 8px; }
+        .task-button { display: flex; align-items: center; gap: 10px; }
+        .task-close { border: 0; padding: 0; color: var(--muted); background: transparent; font-size: 17px; line-height: 1; }
+        .task-close:hover { color: var(--warm); }
+        .clock { margin-left: auto; color: var(--muted); text-align: right; font-size: 12px; }
+        .clock strong { display: block; color: var(--ink); font-size: 13px; }
+        #lock-button {
+            border: 1px solid rgba(24, 42, 49, 0.08);
+            border-radius: 10px;
+            padding: 8px 11px;
+            color: var(--warm);
+            background: rgba(255,255,255,0.42);
+        }
+        #lock-button:hover { background: rgba(183, 121, 77, 0.08); }
+
+        #start-menu {
+            position: absolute;
+            z-index: 60;
+            bottom: 72px;
+            left: 18px;
+            display: none;
+            width: 290px;
+            padding: 18px;
+            border: 1px solid rgba(24, 42, 49, 0.08);
+            border-radius: 18px;
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 22px 42px rgba(18, 35, 42, 0.12);
+            backdrop-filter: blur(14px);
+        }
+
+        #start-menu.open { display: block; animation: rise .18s ease-out; }
+        .menu-heading { margin: 0 0 14px; color: var(--muted); letter-spacing: .12em; font-size: 10px; text-transform: uppercase; }
+        #app-search {
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            padding: 9px 10px;
+            color: var(--ink);
+            background: rgba(255,255,255,0.8);
+            font: inherit;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            margin: 4px 0;
+            padding: 10px 8px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            text-align: left;
+            color: var(--ink);
+        }
+        .menu-item:hover { background: rgba(58,88,109,0.05); }
+        .menu-item[hidden] { display: none; }
+
+        .window {
+            position: absolute;
+            z-index: 10;
+            top: 17%;
+            left: 27%;
+            display: none;
+            width: min(580px, calc(100vw - 42px));
+            min-height: 330px;
+            overflow: hidden;
+            border: 1px solid rgba(24, 42, 49, 0.08);
+            border-radius: 18px;
+            background: rgba(249, 250, 251, 0.8);
+            box-shadow: 0 22px 40px rgba(22, 31, 38, 0.12);
+            backdrop-filter: blur(12px);
+        }
+
+        .window.active { display: block; animation: pop .2s ease-out; }
+        .window-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(24, 42, 49, 0.08);
+            background: rgba(255,255,255,0.46);
+            cursor: grab;
+            user-select: none;
+        }
+        .window-header:active { cursor: grabbing; }
+        .window-title { flex: 1; font-weight: 600; }
+        .window-close { border: 0; background: transparent; color: var(--muted); font-size: 20px; line-height: 1; }
+        .window-close:hover { color: var(--warm); }
+        .window-content { padding: 22px 24px 24px; }
+        .window-content h2 { margin: 0 0 8px; font-size: 24px; }
+        .window-content p { color: var(--muted); }
+        .terminal {
+            padding: 16px;
+            border-radius: 10px;
+            background: #0f1720;
+            color: #9fd7e2;
+            font: 13px/1.7 Consolas, monospace;
+        }
+        .note {
+            width: 100%;
+            min-height: 180px;
+            resize: vertical;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 12px;
+            color: var(--ink);
+            background: rgba(255,255,255,0.7);
+            font: inherit;
+        }
+        .browser-tabs { display: flex; gap: 5px; margin: -8px -8px 12px; overflow-x: auto; }
+        .browser-tab {
+            display: flex; gap: 10px; align-items: center; white-space: nowrap;
+            border: 1px solid var(--line); border-radius: 8px 8px 0 0; padding: 7px 10px; color: var(--muted); background: #f3f5f5; cursor: pointer;
+        }
+        .browser-tab.active { color: var(--ink); border-bottom-color: transparent; background: white; }
+        .browser-tab button { border: 0; padding: 0; color: var(--muted); background: transparent; }
+        .browser-tab button:hover { color: var(--warm); }
+        .browser-controls { display: flex; gap: 6px; margin-bottom: 12px; }
+        .browser-controls input {
+            min-width: 0; flex: 1; border: 1px solid var(--line); border-radius: 8px; padding: 10px; color: var(--ink); background: rgba(255,255,255,0.7); font: inherit;
+        }
+        .browser-controls button {
+            border: 1px solid var(--accent); border-radius: 8px; padding: 0 11px; color: var(--accent); background: transparent;
+        }
+        .browser-controls button:hover { color: white; background: var(--accent); }
+        #browser-frame { width: 100%; height: 275px; border: 1px solid var(--line); background: white; border-radius: 8px; }
+        .code-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .code-toolbar select, .code-toolbar button {
+            border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; color: var(--ink); background: rgba(255,255,255,0.7); font: inherit;
+        }
+        .code-toolbar button:hover { background: var(--accent-soft); }
+        .code-editor {
+            width: 100%; min-height: 190px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 14px; color: #243238; background: #f7f9f9; font: 13px/1.6 Consolas, monospace; tab-size: 4;
+        }
+        .output-label { margin: 14px 0 6px; color: var(--warm); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+        .code-output { min-height: 72px; max-height: 150px; overflow: auto; white-space: pre-wrap; }
+        .tool-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .tool-card { border: 1px solid var(--line); border-radius: 10px; padding: 13px; background: rgba(255,255,255,0.48); }
+        .tool-card h3 { margin: 0 0 10px; color: var(--accent); font-size: 13px; }
+        .tool-card input {
+            width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px; color: var(--ink); background: rgba(255,255,255,0.8); font: inherit;
+        }
+        .tool-result { min-height: 20px; margin-top: 9px; color: var(--muted); overflow-wrap: anywhere; font-size: 12px; }
+        .meter { height: 6px; margin-top: 9px; background: #ebefee; border-radius: 999px; overflow: hidden; }
+        .meter span { display: block; width: 0; height: 100%; background: var(--green); transition: width .2s ease; }
+        .system-list { margin: 0; padding: 0; color: var(--muted); list-style: none; font-size: 12px; }
+        .system-list li { padding: 4px 0; border-bottom: 1px solid rgba(24, 42, 49, 0.06); }
+        #toast {
+            position: fixed; z-index: 90; right: 22px; bottom: 75px; display: none; max-width: 300px; border: 1px solid var(--line); border-radius: 10px; padding: 12px 15px; color: var(--ink); background: rgba(255,255,255,0.9); box-shadow: var(--shadow);
+        }
+        #toast.show { display: block; animation: rise .2s ease-out; }
+
+        @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pop { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
+
+        @media (max-width: 600px) {
+            .brand { top: 22px; left: 24px; }
+            .desktop-icons { top: 68px; left: 15px; }
+            .window { top: 14%; left: 21px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="login-screen">
+        <form class="login-box" id="login-form">
+            <div class="login-mark">N</div>
+            <h1>NEILOS</h1>
+            <p>Enter your session password</p>
+            <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
+            <button type="submit">Unlock session</button>
+            <div id="login-error" role="status"></div>
+        </form>
+    </div>
+
+    <main id="desktop">
+        <div class="brand">NEILOS / STUDIO</div>
+
+        <div class="desktop-shell">
+            <aside class="sidebar">
+                <div class="profile-card">
+                    <div class="profile-avatar">N</div>
+                    <div class="profile-meta">
+                        <strong>Neilos</strong>
+                        <span>Workspace online</span>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <p class="sidebar-section-label">Quick launch</p>
+                    <div class="sidebar-actions">
+                        <button class="sidebar-action" data-app="terminal-window">Terminal</button>
+                        <button class="sidebar-action" data-app="code-window">Code</button>
+                        <button class="sidebar-action" data-app="browser-window">Browser</button>
+                        <button class="sidebar-action" data-app="toolkit-window">Toolkit</button>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="workspace">
+                <div class="workspace-hero">
+                    <div class="workspace-title">
+                        <h1>System overview</h1>
+                        <p>Build, browse, and secure from one place.</p>
+                    </div>
+                    <div class="hero-stat">
+                        <div>
+                            <span style="display:block;color:var(--muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase;">Uptime</span>
+                            <strong>99.9%</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="desktop-icons">
+                    <button class="desktop-icon" data-app="terminal-window"><span class="icon-mark">⌁</span><span>Terminal</span></button>
+                    <button class="desktop-icon" data-app="notes-window"><span class="icon-mark">▤</span><span>Notes</span></button>
+                    <button class="desktop-icon" data-app="network-window"><span class="icon-mark">◎</span><span>Network</span></button>
+                    <button class="desktop-icon" data-app="files-window"><span class="icon-mark">▰</span><span>Files</span></button>
+                    <button class="desktop-icon" data-app="browser-window"><span class="icon-mark">◌</span><span>Browser</span></button>
+                    <button class="desktop-icon" data-app="code-window"><span class="icon-mark">&lt;/&gt;</span><span>Code</span></button>
+                    <button class="desktop-icon" data-app="toolkit-window"><span class="icon-mark">✦</span><span>Toolkit</span></button>
+                    <button class="desktop-icon" data-app="system-window"><span class="icon-mark">▦</span><span>System</span></button>
+                </div>
+            </div>
+        </div>
+
+        <section class="window" id="terminal-window">
+            <header class="window-header"><span>⌁</span><span class="window-title">Terminal</span><button class="window-close" aria-label="Close">×</button></header>
+            <div class="window-content"><div class="terminal" id="terminal-output">neilos@desktop:~$ whoami<br>builder<br><br>neilos@desktop:~$ <span style="color:#f4f7fb">_</span></div></div>
+        </section>
+
+        <section class="window" id="notes-window">
+            <header class="window-header"><span>▤</span><span class="window-title">Notes</span><button class="window-close" aria-label="Close">×</button></header>
+            <div class="window-content"><textarea class="note" placeholder="Write something for your future self..."></textarea></div>
+        </section>
+
+        <section class="window" id="network-window">
+            <header class="window-header"><span>◎</span><span class="window-title">Network</span><button class="window-close" aria-label="Close">×</button></header>
+            <div class="window-content">
+                <h2>Browser notes</h2>
+                <p>This desktop can’t control your real browser settings or launch Tor directly. If you need a separate browser for privacy work, open it from outside this page.</p>
+                <div class="terminal">[ local web sandbox ]<br><span style="color:#f4f7fb">privacy tools: outside this page</span><br><br>1. Open Tor Browser or your usual secure browser<br>2. Keep private work separate from this mock desktop<br>3. Only visit systems you own or have permission to check</div>
+                <p style="color: var(--muted); font-size: 12px">This is just a local demo layout, not a full security tool.</p>
+            </div>
+        </section>
+
+        <section class="window" id="files-window">
+            <header class="window-header"><span>▰</span><span class="window-title">Files</span><button class="window-close" aria-label="Close">×</button></header>
+            <div class="window-content"><h2>Home</h2><p style="color: var(--accent)">▰ Projects &nbsp;&nbsp; ▰ Downloads &nbsp;&nbsp; ▰ Documents</p><p>Your personal workspace is ready for files and experiments.</p></div>
+        </section>
+
+        <section class="window" id="browser-window">
+            <header class="window-header"><span>◌</span><span class="window-title">Browser</span><button class="window-close" aria-label="Close">×</button></header>
+            <div class="window-content">
+                <div class="browser-tabs" id="browser-tabs"></div>
+                <div class="browser-controls"><button id="back-button" type="button" aria-label="Back">&lt;</button><button id="forward-button" type="button" aria-label="Forward">&gt;</button><button id="reload-button" type="button" aria-label="Reload">↻</button><input id="address-bar" value="https://www.google.com" aria-label="Website address"><button id="go-button" type="button">GO</button><button id="external-button" type="button">OPEN</button></div>
+                <iframe id="browser-frame" title="Web page preview" src="https://www.google.com"></iframe>
+                <p style="font-size: 12px">Google and many modern sites block embedded views. Use OPEN for a full browser tab.</p>
+            </div>
+        </section>
+
+        <section class="window" id="code-window">
+            <header class="window-header"><span>&lt;/&gt;</span><span class="window-title">Code</span><button class="window-close" aria-label="Close">×</button></header>
+            <div class="window-content">
+                <div class="code-toolbar"><select id="code-language" aria-label="Programming language"><option value="python">Python</option><option value="javascript">JavaScript</option></select><button id="run-code" type="button">RUN</button><span id="runtime-status" style="color: var(--muted); font-size: 12px">Python runtime ready on demand</span></div>
+                <textarea class="code-editor" id="code-editor" spellcheck="false">print("Hello from Neilos")
+for number in range(3):
+    print("count", number)</textarea>
+                <div class="output-label">Terminal output</div>
+                <div class="terminal code-output" id="code-output">neilos@python:~$ Ready. Press RUN.</div>
+            </div>
+        </section>
+
+        <section class="window" id="toolkit-window">
+            <header class="window-header"><span>✦</span><span class="window-title">Security toolkit</span><button class="window-close" aria-label="Close">×</button></header>
+            <div class="window-content">
+                <p>Browser-safe defensive utilities for your own projects and lab systems.</p>
+                <div class="tool-grid">
+                    <div class="tool-card"><h3>SHA-256 hash</h3><input id="hash-input" placeholder="Text to hash"><div class="tool-result" id="hash-result">Waiting for input</div></div>
+                    <div class="tool-card"><h3>Password check</h3><input id="strength-input" type="password" placeholder="Test a passphrase"><div class="meter"><span id="strength-meter"></span></div><div class="tool-result" id="strength-result">Use a long unique passphrase</div></div>
+                    <div class="tool-card"><h3>Browser system info</h3><ul class="system-list" id="system-info"></ul></div>
+                    <div class="tool-card"><h3>Usage note</h3><div class="tool-result">Only test systems you own or have permission to assess. This toolkit is meant for your own projects, not public targets.</div></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="window" id="system-window">
+            <header class="window-header"><span>▦</span><span class="window-title">System status</span><button class="window-close" aria-label="Close">×</button></header>
+            <div class="window-content"><h2>Neilos is online</h2><ul class="system-list"><li>Session: authenticated</li><li>Runtime: browser sandbox</li><li>Network: <span id="network-state">checking...</span></li><li>Storage: local session only</li></ul><p>Neilos apps run locally in this page. Native tools and protected system access require a real operating system.</p></div>
+        </section>
+
+        <nav id="start-menu" aria-label="Start menu">
+            <p class="menu-heading">Neilos applications</p>
+            <input id="app-search" type="search" placeholder="Search applications" aria-label="Search applications">
+            <button class="menu-item" data-app="terminal-window">⌁ <span>Terminal</span></button>
+            <button class="menu-item" data-app="notes-window">▤ <span>Notes</span></button>
+            <button class="menu-item" data-app="network-window">◎ <span>Network</span></button>
+            <button class="menu-item" data-app="files-window">▰ <span>Files</span></button>
+            <button class="menu-item" data-app="browser-window">◌ <span>Browser</span></button>
+            <button class="menu-item" data-app="code-window">&lt;/&gt; <span>Code</span></button>
+            <button class="menu-item" data-app="toolkit-window">✦ <span>Security toolkit</span></button>
+            <button class="menu-item" data-app="system-window">▦ <span>System status</span></button>
+        </nav>
+
+        <footer class="taskbar">
+            <button id="startbutton" aria-expanded="false">N / Start</button>
+            <div id="task-buttons"></div>
+            <button id="lock-button" type="button">LOCK</button>
+            <div class="clock"><strong id="time">--:--</strong><span id="date">Loading date</span></div>
+        </footer>
+    </main>
+    <div id="toast" role="status"></div>
+    <script>
+        const startButton = document.querySelector("#startbutton");
+        const startMenu = document.querySelector("#start-menu");
+        const taskButtons = document.querySelector("#task-buttons");
+        let topLayer = 10;
+
+        function showToast(message) {
+            const toast = document.querySelector("#toast");
+            toast.textContent = message;
+            toast.classList.add("show");
+            clearTimeout(showToast.timer);
+            showToast.timer = setTimeout(() => toast.classList.remove("show"), 2600);
+        }
+
+        function openApp(id) {
+            const windowElement = document.getElementById(id);
+            windowElement.classList.add("active");
+            windowElement.style.zIndex = ++topLayer;
+            showToast(`${windowElement.querySelector(".window-title").textContent} opened`);
+            startMenu.classList.remove("open");
+            startButton.setAttribute("aria-expanded", "false");
+            if (!document.querySelector(`[data-task="${id}"]`)) {
+                const taskButton = document.createElement("div");
+                taskButton.className = "task-button";
+                taskButton.dataset.task = id;
+                taskButton.setAttribute("role", "button");
+                taskButton.tabIndex = 0;
+                const taskName = document.createElement("span");
+                taskName.textContent = windowElement.querySelector(".window-title").textContent;
+                const closeButton = document.createElement("button");
+                closeButton.className = "task-close";
+                closeButton.type = "button";
+                closeButton.setAttribute("aria-label", `Close ${taskName.textContent}`);
+                closeButton.textContent = "×";
+                closeButton.onclick = (event) => {
+                    event.stopPropagation();
+                    windowElement.classList.remove("active");
+                    taskButton.remove();
+                };
+                taskButton.append(taskName, closeButton);
+                taskButton.onclick = () => openApp(id);
+                taskButton.onkeydown = (event) => {
+                    if (event.key === "Enter" || event.key === " ") openApp(id);
+                };
+                taskButtons.append(taskButton);
+            }
+        }
+
+        document.querySelectorAll("[data-app]").forEach((button) => button.addEventListener("click", () => openApp(button.dataset.app)));
+        document.querySelectorAll(".window-close").forEach((button) => button.addEventListener("click", () => {
+            const windowElement = button.closest(".window");
+            windowElement.classList.remove("active");
+            document.querySelector(`[data-task="${windowElement.id}"]`)?.remove();
+        }));
+        startButton.addEventListener("click", () => {
+            const isOpen = startMenu.classList.toggle("open");
+            startButton.setAttribute("aria-expanded", isOpen);
+        });
+
+        document.querySelector("#app-search").addEventListener("input", (event) => {
+            const query = event.target.value.toLowerCase();
+            document.querySelectorAll("#start-menu .menu-item").forEach((item) => {
+                item.hidden = !item.textContent.toLowerCase().includes(query);
+            });
+        });
+
+        document.querySelector("#lock-button").addEventListener("click", () => {
+            document.querySelector("#login-screen").classList.remove("hidden");
+            document.querySelector("#password").value = "";
+            document.querySelector("#password").focus();
+            showToast("Session locked");
+        });
+
+        document.querySelector("#login-form").addEventListener("submit", (event) => {
+            event.preventDefault();
+            const password = document.querySelector("#password").value;
+            if (password === "neilos") {
+                document.querySelector("#login-screen").classList.add("hidden");
+                document.querySelector("#login-error").textContent = "";
+                showToast("Session unlocked");
+            } else {
+                document.querySelector("#login-error").textContent = "Incorrect password. Demo password: neilos";
+            }
+        });
+
+        document.querySelector("#network-state").textContent = navigator.onLine ? "online" : "offline";
+        window.addEventListener("online", () => document.querySelector("#network-state").textContent = "online");
+        window.addEventListener("offline", () => document.querySelector("#network-state").textContent = "offline");
+
+        const browserTabs = [{ history: ["https://www.google.com"], position: 0 }];
+        let activeBrowserTab = 0;
+
+        function renderBrowserTabs() {
+            const tabsElement = document.querySelector("#browser-tabs");
+            tabsElement.replaceChildren();
+            browserTabs.forEach((tab, index) => {
+                const tabElement = document.createElement("div");
+                tabElement.className = `browser-tab${index === activeBrowserTab ? " active" : ""}`;
+                tabElement.textContent = index === 0 ? "Search" : `Tab ${index + 1}`;
+                tabElement.onclick = () => { activeBrowserTab = index; syncBrowser(); };
+                const closeTab = document.createElement("button");
+                closeTab.textContent = "×";
+                closeTab.setAttribute("aria-label", `Close tab ${index + 1}`);
+                closeTab.onclick = (event) => {
+                    event.stopPropagation();
+                    if (browserTabs.length === 1) return;
+                    browserTabs.splice(index, 1);
+                    activeBrowserTab = Math.min(activeBrowserTab, browserTabs.length - 1);
+                    syncBrowser();
+                };
+                tabElement.append(closeTab);
+                tabsElement.append(tabElement);
+            });
+            const newTab = document.createElement("button");
+            newTab.className = "browser-tab";
+            newTab.textContent = "+";
+            newTab.title = "New tab";
+            newTab.onclick = () => {
+                browserTabs.push({ history: ["https://www.google.com"], position: 0 });
+                activeBrowserTab = browserTabs.length - 1;
+                syncBrowser();
+            };
+            tabsElement.append(newTab);
+        }
+
+        function syncBrowser() {
+            const tab = browserTabs[activeBrowserTab];
+            document.querySelector("#address-bar").value = tab.history[tab.position];
+            document.querySelector("#browser-frame").src = tab.history[tab.position];
+            renderBrowserTabs();
+        }
+
+        function getBrowserUrl() {
+            const rawUrl = document.querySelector("#address-bar").value.trim();
+            const candidate = rawUrl.includes("://") || rawUrl.includes(".") ? rawUrl : `https://www.google.com/search?q=${encodeURIComponent(rawUrl)}`;
+            const url = new URL(candidate.includes("://") ? candidate : `https://${candidate}`);
+            if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("Only web addresses are allowed");
+            return url.href;
+        }
+
+        function navigateBrowser() {
+            const addressBar = document.querySelector("#address-bar");
+            try {
+                const url = getBrowserUrl();
+                addressBar.value = url;
+                const tab = browserTabs[activeBrowserTab];
+                tab.history = tab.history.slice(0, tab.position + 1);
+                tab.history.push(url);
+                tab.position += 1;
+                syncBrowser();
+            } catch {
+                addressBar.value = "Invalid web address";
+            }
+        }
+
+        document.querySelector("#go-button").addEventListener("click", navigateBrowser);
+        document.querySelector("#address-bar").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") navigateBrowser();
+        });
+        document.querySelector("#external-button").addEventListener("click", () => {
+            try { window.open(getBrowserUrl(), "_blank", "noopener,noreferrer"); } catch { document.querySelector("#address-bar").value = "Invalid web address"; }
+        });
+        document.querySelector("#back-button").addEventListener("click", () => {
+            const tab = browserTabs[activeBrowserTab];
+            if (tab.position > 0) { tab.position -= 1; syncBrowser(); }
+        });
+        document.querySelector("#forward-button").addEventListener("click", () => {
+            const tab = browserTabs[activeBrowserTab];
+            if (tab.position < tab.history.length - 1) { tab.position += 1; syncBrowser(); }
+        });
+        document.querySelector("#reload-button").addEventListener("click", () => {
+            document.querySelector("#browser-frame").src = browserTabs[activeBrowserTab].history[browserTabs[activeBrowserTab].position];
+        });
+        renderBrowserTabs();
+
+        let pyodidePromise;
+        function loadPythonRuntime() {
+            if (pyodidePromise) return pyodidePromise;
+            document.querySelector("#runtime-status").textContent = "Loading Python runtime...";
+            pyodidePromise = new Promise((resolve, reject) => {
+                const script = document.createElement("script");
+                script.src = "https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js";
+                script.onload = async () => {
+                    try { resolve(await window.loadPyodide()); } catch (error) { reject(error); }
+                };
+                script.onerror = () => reject(new Error("Could not load Pyodide. Check your internet connection."));
+                document.head.append(script);
+            });
+            return pyodidePromise;
+        }
+
+        document.querySelector("#run-code").addEventListener("click", async () => {
+            const language = document.querySelector("#code-language").value;
+            const source = document.querySelector("#code-editor").value;
+            const output = document.querySelector("#code-output");
+            const terminalOutput = document.querySelector("#terminal-output");
+            output.textContent = "neilos@runtime:~$ Running...\n";
+            try {
+                if (language === "python") {
+                    const pyodide = await loadPythonRuntime();
+                    const lines = [];
+                    pyodide.setStdout({ batched: (text) => lines.push(text) });
+                    pyodide.setStderr({ batched: (text) => lines.push(`ERROR: ${text}`) });
+                    await pyodide.runPythonAsync(source);
+                    output.textContent = `neilos@python:~$\n${lines.join("\n") || "Program finished with no output."}`;
+                    document.querySelector("#runtime-status").textContent = "Python runtime loaded";
+                } else {
+                    const lines = [];
+                    const safeConsole = { log: (...values) => lines.push(values.join(" ")), error: (...values) => lines.push(`ERROR: ${values.join(" ")}`) };
+                    new Function("console", source)(safeConsole);
+                    output.textContent = `neilos@javascript:~$\n${lines.join("\n") || "Program finished with no output."}`;
+                }
+                terminalOutput.innerHTML = output.textContent.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+            } catch (error) {
+                output.textContent = `neilos@runtime:~$ ERROR\n${error.message}`;
+                document.querySelector("#runtime-status").textContent = "Runtime error";
+            }
+        });
+
+        document.querySelector("#hash-input").addEventListener("input", async (event) => {
+            const bytes = new TextEncoder().encode(event.target.value);
+            const digest = await crypto.subtle.digest("SHA-256", bytes);
+            document.querySelector("#hash-result").textContent = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("") || "Waiting for input";
+        });
+
+        document.querySelector("#strength-input").addEventListener("input", (event) => {
+            const value = event.target.value;
+            let score = Math.min(100, value.length * 6);
+            if (/[A-Z]/.test(value)) score += 8;
+            if (/[0-9]/.test(value)) score += 8;
+            if (/[^A-Za-z0-9]/.test(value)) score += 8;
+            score = Math.min(100, score);
+            document.querySelector("#strength-meter").style.width = `${score}%`;
+            document.querySelector("#strength-result").textContent = score < 35 ? "Weak" : score < 70 ? "Getting stronger" : "Strong passphrase";
+        });
+
+        const systemInfo = document.querySelector("#system-info");
+        [
+            ["Platform", navigator.platform],
+            ["Browser", navigator.userAgent.split(" ").slice(-1)[0]],
+            ["Language", navigator.language],
+            ["Cores", navigator.hardwareConcurrency || "Unavailable"]
+        ].forEach(([label, value]) => {
+            const item = document.createElement("li");
+            item.textContent = `${label}: ${value}`;
+            systemInfo.append(item);
+        });
+
+        document.querySelectorAll(".window").forEach((windowElement) => {
+            const header = windowElement.querySelector(".window-header");
+            let dragging = false;
+            let offsetX = 0;
+            let offsetY = 0;
+            header.addEventListener("pointerdown", (event) => {
+                dragging = true;
+                windowElement.style.zIndex = ++topLayer;
+                offsetX = event.clientX - windowElement.offsetLeft;
+                offsetY = event.clientY - windowElement.offsetTop;
+                header.setPointerCapture(event.pointerId);
+            });
+            header.addEventListener("pointermove", (event) => {
+                if (!dragging) return;
+                windowElement.style.left = `${Math.max(8, event.clientX - offsetX)}px`;
+                windowElement.style.top = `${Math.max(8, event.clientY - offsetY)}px`;
+            });
+            header.addEventListener("pointerup", () => { dragging = false; });
+        });
+
+        function updateClock() {
+            const now = new Date();
+            document.querySelector("#time").textContent = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            document.querySelector("#date").textContent = now.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
